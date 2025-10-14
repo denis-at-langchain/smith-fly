@@ -102,12 +102,7 @@ Options:
 
 ### Configuration Setup
 
-1. Create configuration directory:
-```bash
-mkdir -p config
-```
-
-2. Create `config/.env` file:
+1. Create `config/.env` file:
 ```bash
 cat > config/.env << EOF
 initialOrgAdminEmail="admin@example.com"
@@ -115,9 +110,9 @@ LicenseKey="your-license-key-here"
 EOF
 ```
 
-3. Create `config/config.yaml` with base Helm values (see LangChain documentation for Self-Hosted [LangSmith](https://docs.langchain.com/langsmith/kubernetes) and [LangGraph Platform](https://docs.langchain.com/langgraph-platform/deploy-self-hosted-full-platform))
+2. Create `config/config.yaml` with base Helm values (see LangChain documentation for Self-Hosted [LangSmith](https://docs.langchain.com/langsmith/kubernetes) and [LangGraph Platform](https://docs.langchain.com/langgraph-platform/deploy-self-hosted-full-platform))
 
-4. Run the script:
+3. Run the script:
 ```bash
 ./langlab.sh up -ls
 ```
