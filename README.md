@@ -1,4 +1,4 @@
-# LangLab - LangSmith & LangGraph Platform Installer
+# smith-playground - LangSmith & LangGraph Platform Installer
 
 Automated installation and management tool for LangSmith and LangGraph Platform on any Kubernetes cluster.
 
@@ -66,28 +66,28 @@ config:
 
 ```bash
 # Install LangSmith only
-./langlab.sh up -ls
+./smith-playground.sh up -ls
 
 # Install LangSmith with specific version
-./langlab.sh up -ls -v 1.2.3
+./smith-playground.sh up -ls -v 1.2.3
 
 # Install LangSmith with debug output
-./langlab.sh up -ls --debug
+./smith-playground.sh up -ls --debug
 
 # Install LangGraph Platform (auto-installs LangSmith if needed)
-./langlab.sh up -lgp
+./smith-playground.sh up -lgp
 
 # Install both explicitly
-./langlab.sh up -ls -lgp
+./smith-playground.sh up -ls -lgp
 
 # Uninstall everything
-./langlab.sh down
+./smith-playground.sh down
 ```
 
 ### Command Options
 
 ```
-Usage: ./langlab.sh <up|down> [-ls|-lgp] [-v VERSION] [--debug]
+Usage: ./smith-playground.sh <up|down> [-ls|-lgp] [-v VERSION] [--debug]
 
 Actions:
     up      Spin up/install LangSmith or LangGraph Platform
@@ -114,7 +114,7 @@ EOF
 
 3. Run the script:
 ```bash
-./langlab.sh up -ls
+./smith-playground.sh up -ls
 ```
 
 ## Troubleshooting
@@ -211,7 +211,7 @@ hostname | tr '[:upper:]' '[:lower:]' | tr '.' '-'
 
 ### Manual Cleanup
 
-If `./langlab.sh down` fails:
+If `./smith-playground.sh down` fails:
 ```bash
 # Set your namespace
 NAMESPACE=$(hostname | tr '[:upper:]' '[:lower:]' | tr '.' '-')
@@ -234,7 +234,7 @@ kubectl delete namespace $NAMESPACE
 - **CPU**: ~20 cores
 - **Memory**: ~50Gi
 
-**Important**: This is a test environment - delete the installation immediately after testing/reproduction to avoid unnecessary resource consumption and costs. Use `./langlab.sh down` to clean up all resources.
+**Important**: This is a test environment - delete the installation immediately after testing/reproduction to avoid unnecessary resource consumption and costs. Use `./smith-playground.sh down` to clean up all resources.
 
 ## Platform Compatibility
 
@@ -264,8 +264,8 @@ The script automatically detects ingress endpoints using both hostname (AWS) and
 ## Files Structure
 
 ```
-langlab/
-├── langlab.sh              # Main installation script
+smith-playground/
+├── smith-playground.sh     # Main installation script
 ├── README.md               # This file
 ├── .gitignore              # Git ignore file (excludes .env and generated configs)
 └── config/
