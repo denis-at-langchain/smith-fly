@@ -1,12 +1,12 @@
-# smith-playground - LangSmith & LangGraph Platform Installer
+# smith-fly - LangSmith & LangSmith Deployment Installer
 
-Automated installation and management tool for LangSmith and LangGraph Platform on any Kubernetes cluster.
+Automated installation and management tool for LangSmith and LangSmith Deployment on any Kubernetes cluster.
 
 > ⚠️ **IMPORTANT**: This script is intended for **TEST PURPOSES ONLY**. It is designed for quick testing, development, and reproduction environments. Do not use this for production deployments.
 
 ## Purpose
 
-This script automates the deployment of LangSmith and LangGraph Platform to Kubernetes clusters for **testing and development purposes**. It provides a quick way to spin up environments for reproduction, debugging, and evaluation across multiple cloud providers and on-premise environments.
+This script automates the deployment of LangSmith and LangSmith Deployment to Kubernetes clusters for **testing and development purposes**. It provides a quick way to spin up environments for reproduction, debugging, and evaluation across multiple cloud providers and on-premise environments.
 
 Key capabilities:
 - Configuration generation with secure secrets
@@ -52,7 +52,7 @@ config:
   initialOrgAdminPassword: "" # Will be populated by script
 ```
 
-For LangGraph Platform, the script adds:
+For LangSmith Deployment, the script adds:
 ```yaml
 config:
   langgraphPlatform:
@@ -66,36 +66,36 @@ config:
 
 ```bash
 # Install LangSmith only
-./smith-playground.sh up -ls
+./smith-fly.sh up -l
 
 # Install LangSmith with specific version
-./smith-playground.sh up -ls -v 1.2.3
+./smith-fly.sh up -l -v 1.2.3
 
 # Install LangSmith with debug output
-./smith-playground.sh up -ls --debug
+./smith-fly.sh up -l --debug
 
-# Install LangGraph Platform (auto-installs LangSmith if needed)
-./smith-playground.sh up -lgp
+# Install LangSmith Deployment (auto-installs LangSmith if needed)
+./smith-fly.sh up -ld
 
 # Install both explicitly
-./smith-playground.sh up -ls -lgp
+./smith-fly.sh up -l -ld
 
 # Uninstall everything
-./smith-playground.sh down
+./smith-fly.sh down
 ```
 
 ### Command Options
 
 ```
-Usage: ./smith-playground.sh <up|down> [-ls|-lgp] [-v VERSION] [--debug]
+Usage: ./smith-fly.sh <up|down> [-l|-ld] [-v VERSION] [--debug]
 
 Actions:
-    up      Spin up/install LangSmith or LangGraph Platform
-    down    Delete both LangSmith and LangGraph Platform
+    up      Spin up/install LangSmith or LangSmith Deployment
+    down    Delete both LangSmith and LangSmith Deployment
 
 Options:
-    -ls     Install LangSmith
-    -lgp    Install LangGraph Platform
+    -l      Install LangSmith
+    -ld     Install LangSmith Deployment
     -v      Specify version (optional)
     --debug Enable Helm debug output (optional)
 ```
@@ -110,11 +110,11 @@ LicenseKey="your-license-key-here"
 EOF
 ```
 
-2. Create `config/config.yaml` with base Helm values (see LangChain documentation for Self-Hosted [LangSmith](https://docs.langchain.com/langsmith/kubernetes) and [LangGraph Platform](https://docs.langchain.com/langgraph-platform/deploy-self-hosted-full-platform))
+2. Create `config/config.yaml` with base Helm values (see LangChain documentation for Self-Hosted [LangSmith](https://docs.langchain.com/langsmith/kubernetes) and [LangSmith Deployment](https://docs.langchain.com/langgraph-platform/deploy-self-hosted-full-platform))
 
 3. Run the script:
 ```bash
-./smith-playground.sh up -ls
+./smith-fly.sh up -l
 ```
 
 ## Troubleshooting
@@ -211,13 +211,13 @@ hostname | tr '[:upper:]' '[:lower:]' | tr '.' '-'
 
 ### Manual Cleanup
 
-If `./smith-playground.sh down` fails:
+If `./smith-fly.sh down` fails:
 ```bash
 # Set your namespace
 NAMESPACE=$(hostname | tr '[:upper:]' '[:lower:]' | tr '.' '-')
 
 # Uninstall Helm releases
-helm uninstall langgraph-cloud -n $NAMESPACE
+helm uninstall langsmith-deployment -n $NAMESPACE
 helm uninstall langsmith -n $NAMESPACE
 
 # Delete PVCs
@@ -234,7 +234,7 @@ kubectl delete namespace $NAMESPACE
 - **CPU**: ~20 cores
 - **Memory**: ~50Gi
 
-**Important**: This is a test environment - delete the installation immediately after testing/reproduction to avoid unnecessary resource consumption and costs. Use `./smith-playground.sh down` to clean up all resources.
+**Important**: This is a test environment - delete the installation immediately after testing/reproduction to avoid unnecessary resource consumption and costs. Use `./smith-fly.sh down` to clean up all resources.
 
 ## Platform Compatibility
 
@@ -264,21 +264,21 @@ The script automatically detects ingress endpoints using both hostname (AWS) and
 ## Files Structure
 
 ```
-smith-playground/
-├── smith-playground.sh     # Main installation script
+smith-fly/
+├── smith-fly.sh        # Main installation script
 ├── README.md               # This file
 ├── .gitignore              # Git ignore file (excludes .env and generated configs)
 └── config/
     ├── .env                # User configuration (license, email) - DO NOT COMMIT!
     ├── config.yaml         # Base Helm values
     ├── ls_config.yaml      # Generated LangSmith config (temporary)
-    └── lgp_config.yaml     # Generated LangGraph config (temporary)
+    └── ld_config.yaml      # Generated LangSmith Deployment config (temporary)
 ```
 
 **Important:** The `.gitignore` file is configured to exclude:
 - `config/.env` - Contains sensitive credentials
 - `config/ls_config.yaml` - Generated configuration with secrets
-- `config/lgp_config.yaml` - Generated configuration with secrets
+- `config/ld_config.yaml` - Generated configuration with secrets
 
 ## TODO
 
@@ -298,6 +298,6 @@ This script is provided as-is for **testing and development purposes only**. It 
 
 For issues related to:
 - **Script functionality**: Check troubleshooting section above
-- **LangSmith/LangGraph**: Consult [LangChain documentation](https://docs.smith.langchain.com/) for Self-Hosted [LangSmith](https://docs.langchain.com/langsmith/kubernetes) and [LangGraph Platform](https://docs.langchain.com/langgraph-platform/deploy-self-hosted-full-platform)
+- **LangSmith/LangSmith Deployment**: Consult [LangChain documentation](https://docs.smith.langchain.com/) for Self-Hosted [LangSmith](https://docs.langchain.com/langsmith/kubernetes) and [LangSmith Deployment](https://docs.langchain.com/langgraph-platform/deploy-self-hosted-full-platform)
 - **Kubernetes**: Check your cluster provider documentation
 - [LangChain Support portal](https://support.langchain.com/)

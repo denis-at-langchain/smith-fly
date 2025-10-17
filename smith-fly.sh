@@ -1,12 +1,12 @@
 #!/bin/bash
 
 ##############################################################################
-# LangSmith and LangGraph Platform Installation Script for Kubernetes Clusters
+# LangSmith and LangSmith Deployment Installation Script for Kubernetes Clusters
 # 
 # Description: Automates the installation and management of LangSmith and 
-#              LangGraph Platform on any Kubernetes cluster (cross-platform)
+#              LangSmith Deployment on any Kubernetes cluster (cross-platform)
 # 
-# Usage: ./smith-playground.sh <up|down> <-ls|-lgp> [-v VERSION]
+# Usage: ./smith-fly.sh <up|down> <-l|-ld> [-v VERSION]
 # 
 # Date: 2025-10-14
 ##############################################################################
@@ -22,11 +22,11 @@ CONFIG_DIR="${SCRIPT_DIR}/config"
 ENV_FILE="${CONFIG_DIR}/.env"
 CONFIG_YAML="${CONFIG_DIR}/config.yaml"
 LS_CONFIG_YAML="${CONFIG_DIR}/ls_config.yaml"
-LGP_CONFIG_YAML="${CONFIG_DIR}/lgp_config.yaml"
+LD_CONFIG_YAML="${CONFIG_DIR}/ld_config.yaml"
 
 ACTION=""
 INSTALL_LS=false
-INSTALL_LGP=false
+INSTALL_LD=false
 VERSION=""
 DEBUG=false
 NAMESPACE=""
@@ -90,29 +90,29 @@ trap cleanup_on_error ERR
 ##############################################################################
 show_usage() {
     cat << EOF
-Usage: $0 <up|down> [-ls|-lgp] [-v VERSION] [--debug]
+Usage: $0 <up|down> [-l|-ld] [-v VERSION] [--debug]
 
 Actions:
-    up      Spin up/install LangSmith or LangGraph Platform
-    down    Delete both LangSmith and LangGraph Platform from your installation
+    up      Spin up/install LangSmith or LangSmith Deployment
+    down    Delete both LangSmith and LangSmith Deployment from your installation
 
 Options (for 'up' action):
-    -ls     Install LangSmith
-    -lgp    Install LangGraph Platform
+    -l      Install LangSmith
+    -ld     Install LangSmith Deployment
     -v      Specify version (optional)
     --debug Enable Helm debug output (optional)
 
 Examples:
-    $0 up -ls                    # Install LangSmith only
-    $0 up -ls -v 1.2.3           # Install LangSmith with specific version
-    $0 up -ls --debug            # Install LangSmith with debug output
-    $0 up -lgp                   # Install LangGraph Platform (automatically installs LangSmith if not present)
-    $0 down                      # Remove both LangSmith and LangGraph Platform
+    $0 up -l                     # Install LangSmith only
+    $0 up -l -v 1.2.3            # Install LangSmith with specific version
+    $0 up -l --debug             # Install LangSmith with debug output
+    $0 up -ld                    # Install LangSmith Deployment (automatically installs LangSmith if not present)
+    $0 down                      # Remove both LangSmith and LangSmith Deployment
 
 Notes:
-    - At least one of -ls or -lgp must be specified with "up"
-    - When installing LangGraph Platform (-lgp), LangSmith is automatically installed if not already present
-    - The "down" action removes both LangSmith and LangGraph Platform
+    - At least one of -l or -ld must be specified with "up"
+    - When installing LangSmith Deployment (-ld), LangSmith is automatically installed if not already present
+    - The "down" action removes both LangSmith and LangSmith Deployment
     - Configuration is read from ${ENV_FILE}
     - Namespace is auto-generated from your local machine hostname
 
@@ -180,12 +180,12 @@ parse_arguments() {
     # Parse remaining arguments
     while [ $# -gt 0 ]; do
         case "$1" in
-            -ls)
+            -l)
                 INSTALL_LS=true
                 shift
                 ;;
-            -lgp)
-                INSTALL_LGP=true
+            -ld)
+                INSTALL_LD=true
                 shift
                 ;;
             -v)
@@ -207,10 +207,10 @@ parse_arguments() {
         esac
     done
     
-    # Validate that at least one of -ls or -lgp is specified for 'up' action
+    # Validate that at least one of -l or -ld is specified for 'up' action
     if [ "$ACTION" = "up" ]; then
-        if [ "$INSTALL_LS" = false ] && [ "$INSTALL_LGP" = false ]; then
-            log ERROR "At least one of -ls or -lgp must be specified with 'up' action"
+        if [ "$INSTALL_LS" = false ] && [ "$INSTALL_LD" = false ]; then
+            log ERROR "At least one of -l or -ld must be specified with 'up' action"
             show_usage
         fi
     fi
@@ -218,13 +218,13 @@ parse_arguments() {
     # For 'down' action, remove both regardless of flags
     if [ "$ACTION" = "down" ]; then
         INSTALL_LS=true
-        INSTALL_LGP=true
-        log INFO "Down action will remove both LangSmith and LangGraph Platform"
+        INSTALL_LD=true
+        log INFO "Down action will remove both LangSmith and LangSmith Deployment"
     fi
     
     log INFO "Action: ${ACTION}"
     log INFO "Install LangSmith: ${INSTALL_LS}"
-    log INFO "Install LangGraph Platform: ${INSTALL_LGP}"
+    log INFO "Install LangSmith Deployment: ${INSTALL_LD}"
     
     if [ -n "$VERSION" ]; then
         log INFO "Version: ${VERSION}"
@@ -359,8 +359,8 @@ create_langsmith_config() {
         -e "s/jwtSecret:.*/jwtSecret: \"${escaped_jwt}\"/" \
         "$LS_CONFIG_YAML"
     
-    # Add langgraphPlatformLicenseKey only if LangGraph Platform is being installed
-    if [ "$INSTALL_LGP" = true ]; then
+    # Add langgraphPlatformLicenseKey only if LangSmith Deployment is being installed
+    if [ "$INSTALL_LD" = true ]; then
         if ! grep -q "langgraphPlatformLicenseKey" "$LS_CONFIG_YAML"; then
             sed -i.bak "/langsmithLicenseKey:/a\\
   langgraphPlatformLicenseKey: \"${escaped_license}\"" "$LS_CONFIG_YAML"
@@ -416,11 +416,11 @@ install_langsmith() {
 }
 
 ##############################################################################
-# Function: create_langgraph_config
-# Description: Creates LangGraph Platform configuration file
+# Function: create_langsmith_deployment_config
+# Description: Creates LangSmith Deployment configuration file
 ##############################################################################
-create_langgraph_config() {
-    log INFO "Creating LangGraph Platform configuration file..."
+create_langsmith_deployment_config() {
+    log INFO "Creating LangSmith Deployment configuration file..."
     
     # Copy LangSmith config to reuse same secrets
     if [ ! -f "$LS_CONFIG_YAML" ]; then
@@ -428,16 +428,16 @@ create_langgraph_config() {
         exit 1
     fi
     
-    cp "$LS_CONFIG_YAML" "$LGP_CONFIG_YAML"
+    cp "$LS_CONFIG_YAML" "$LD_CONFIG_YAML"
     
     # Escape special characters for sed
     escaped_license=$(printf '%s\n' "$LicenseKey" | sed 's/[\/&]/\\&/g')
     
-    # Add LangGraph Platform configuration under config section
+    # Add LangSmith Deployment configuration under config section
     # Check if config section exists
-    if ! grep -q "^config:" "$LGP_CONFIG_YAML"; then
+    if ! grep -q "^config:" "$LD_CONFIG_YAML"; then
         # Add config section with langgraphPlatform
-        cat >> "$LGP_CONFIG_YAML" << EOF
+        cat >> "$LD_CONFIG_YAML" << EOF
 
 config:
   langgraphPlatform:
@@ -446,24 +446,24 @@ config:
 EOF
     else
         # Config section exists, check if langgraphPlatform exists
-        if ! grep -q "langgraphPlatform:" "$LGP_CONFIG_YAML"; then
+        if ! grep -q "langgraphPlatform:" "$LD_CONFIG_YAML"; then
             # Add langgraphPlatform under config section
             sed -i.bak "/^config:/a\\
   langgraphPlatform:\\
     enabled: true\\
-    langgraphPlatformLicenseKey: \"${LicenseKey}\"" "$LGP_CONFIG_YAML"
-            rm -f "${LGP_CONFIG_YAML}.bak"
+    langgraphPlatformLicenseKey: \"${LicenseKey}\"" "$LD_CONFIG_YAML"
+            rm -f "${LD_CONFIG_YAML}.bak"
         else
             # Update existing langgraphPlatform section
             sed -i.bak \
                 -e "/langgraphPlatform:/,/enabled:/ s/enabled:.*/enabled: true/" \
                 -e "/langgraphPlatform:/,/langgraphPlatformLicenseKey:/ s/langgraphPlatformLicenseKey:.*/langgraphPlatformLicenseKey: \"${escaped_license}\"/" \
-                "$LGP_CONFIG_YAML"
-            rm -f "${LGP_CONFIG_YAML}.bak"
+                "$LD_CONFIG_YAML"
+            rm -f "${LD_CONFIG_YAML}.bak"
         fi
     fi
     
-    log SUCCESS "LangGraph Platform configuration file created: ${LGP_CONFIG_YAML}"
+    log SUCCESS "LangSmith Deployment configuration file created: ${LD_CONFIG_YAML}"
 }
 
 ##############################################################################
@@ -479,11 +479,11 @@ check_langsmith_installed() {
 }
 
 ##############################################################################
-# Function: install_langgraph
-# Description: Installs LangGraph Platform using Helm
+# Function: install_langsmith_deployment
+# Description: Installs LangSmith Deployment using Helm
 ##############################################################################
-install_langgraph() {
-    log INFO "Installing LangGraph Platform..."
+install_langsmith_deployment() {
+    log INFO "Installing LangSmith Deployment..."
     
     # Check if LangSmith is installed
     if ! check_langsmith_installed; then
@@ -493,19 +493,19 @@ install_langgraph() {
         log INFO "LangSmith is already installed"
     fi
     
-    # Create LangGraph configuration
-    create_langgraph_config
+    # Create LangSmith Deployment configuration
+    create_langsmith_deployment_config
     
     # Build helm command
-    local helm_cmd="helm upgrade --install langgraph-cloud langchain/langgraph-cloud"
+    local helm_cmd="helm upgrade --install langsmith-deployment langchain/langgraph-cloud"
     helm_cmd+=" --namespace ${NAMESPACE}"
-    helm_cmd+=" --values ${LGP_CONFIG_YAML}"
+    helm_cmd+=" --values ${LD_CONFIG_YAML}"
     helm_cmd+=" --wait --timeout 30m"
     
     # Add version if specified
     if [ -n "$VERSION" ]; then
         helm_cmd+=" --version ${VERSION}"
-        log INFO "Installing LangGraph Platform version: ${VERSION}"
+        log INFO "Installing LangSmith Deployment version: ${VERSION}"
     fi
     
     # Add debug flag if enabled
@@ -519,7 +519,7 @@ install_langgraph() {
     # Execute helm install
     eval "$helm_cmd"
     
-    log SUCCESS "LangGraph Platform installed successfully"
+    log SUCCESS "LangSmith Deployment installed successfully"
 }
 
 ##############################################################################
@@ -581,11 +581,13 @@ display_langsmith_info() {
 import os
 
 os.environ["LANGSMITH_TRACING"] = "true"
-os.environ["LANGSMITH_ENDPOINT"] = "http://${endpoint}/api"
+os.environ["LANGSMITH_ENDPOINT"] = "http://${endpoint}/api/v1"
 os.environ["LANGSMITH_API_KEY"] = "YOUR_KEY"
 os.environ["OPENAI_API_KEY"] = "YOUR_KEY"
 os.environ["LANGSMITH_PROJECT"] = "YOUR_PROJECT"
 EOF
+    echo ""
+    echo "" More details: https://docs.langchain.com/langsmith/self-host-usage
     echo ""
     echo "=========================================================================="
     echo ""
@@ -593,10 +595,10 @@ EOF
 
 ##############################################################################
 # Function: uninstall_all
-# Description: Uninstalls LangSmith and LangGraph Platform
+# Description: Uninstalls LangSmith and LangSmith Deployment
 ##############################################################################
 uninstall_all() {
-    log INFO "Starting uninstallation process for both LangSmith and LangGraph Platform..."
+    log INFO "Starting uninstallation process for both LangSmith and LangSmith Deployment..."
     
     # Check if namespace exists
     if ! kubectl get namespace "$NAMESPACE" &> /dev/null; then
@@ -604,9 +606,9 @@ uninstall_all() {
         return 0
     fi
     
-    # Uninstall LangGraph Platform
-    log INFO "Uninstalling LangGraph Platform..."
-    helm uninstall langgraph-cloud -n "$NAMESPACE" 2>/dev/null || log WARNING "LangGraph Platform not found or already uninstalled"
+    # Uninstall LangSmith Deployment
+    log INFO "Uninstalling LangSmith Deployment..."
+    helm uninstall langsmith-deployment -n "$NAMESPACE" 2>/dev/null || log WARNING "LangSmith Deployment not found or already uninstalled"
     
     # Uninstall LangSmith
     log INFO "Uninstalling LangSmith..."
@@ -622,7 +624,7 @@ uninstall_all() {
         data-langsmith-clickhouse-0 \
         data-langsmith-postgres-0 \
         data-langsmith-redis-0 \
-        data-langgraph-cloud-postgres-0 \
+        data-langsmith-deployment-postgres-0 \
         -n "$NAMESPACE" --ignore-not-found 2>/dev/null || true
     
     # Delete namespace
@@ -632,7 +634,7 @@ uninstall_all() {
     # Remove configuration files
     log INFO "Removing configuration files..."
     [ -f "$LS_CONFIG_YAML" ] && rm -f "$LS_CONFIG_YAML" && log INFO "Removed ${LS_CONFIG_YAML}"
-    [ -f "$LGP_CONFIG_YAML" ] && rm -f "$LGP_CONFIG_YAML" && log INFO "Removed ${LGP_CONFIG_YAML}"
+    [ -f "$LD_CONFIG_YAML" ] && rm -f "$LD_CONFIG_YAML" && log INFO "Removed ${LD_CONFIG_YAML}"
     
     log SUCCESS "Uninstallation completed successfully"
 }
@@ -641,7 +643,7 @@ uninstall_all() {
 # Main execution
 ##############################################################################
 main() {
-    log INFO "Starting LangSmith/LangGraph Platform Installation Script"
+    log INFO "Starting LangSmith/LangSmith Deployment Installation Script"
     
     # Parse command line arguments
     parse_arguments "$@"
@@ -665,8 +667,8 @@ main() {
                 install_langsmith
             fi
             
-            if [ "$INSTALL_LGP" = true ]; then
-                install_langgraph
+            if [ "$INSTALL_LD" = true ]; then
+                install_langsmith_deployment
             fi
             ;;
         down)
