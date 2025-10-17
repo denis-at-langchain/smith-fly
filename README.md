@@ -77,9 +77,6 @@ config:
 # Install LangSmith Deployment (auto-installs LangSmith if needed)
 ./smith-fly.sh up -ld
 
-# Install both explicitly
-./smith-fly.sh up -l -ld
-
 # Uninstall everything
 ./smith-fly.sh down
 ```
